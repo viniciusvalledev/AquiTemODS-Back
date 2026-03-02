@@ -20,6 +20,7 @@ import { authMiddleware } from "./middlewares/auth.middleware";
 import sustentAiRoutes from "./routes/sustentai.routes";
 import sustentaiAcoesConteudoRoutes from "./routes/SustentaiConteudo.routes";
 import adminSustentaiRoutes from "./routes/adminSustentai.routes";
+import adminSustentaiAcoesConteudoRoutes from "./routes/adminSustentaiAcoesConteudo.routes";
 
 const app = express();
 const uploadsPath = path.resolve(process.cwd(), "uploads");
@@ -54,6 +55,7 @@ app.use("/api/sustentai", sustentaiAcoesConteudoRoutes);
 
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin", adminSustentaiRoutes);
+app.use("/api/admin", adminSustentaiAcoesConteudoRoutes);
 
 
 app.use("/api/users", authMiddleware, userRoutes);

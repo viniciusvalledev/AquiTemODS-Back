@@ -5,6 +5,7 @@ import { adminAuthMiddleware } from "../middlewares/adminAuth.middleware";
 import { SustentaiAcoesController } from "../controllers/SustentaiAcoesController";
 import { SustentaiPessoasController } from "../controllers/SustentaiPessoasController";
 import { SustentaiHeaderController } from "../controllers/SustentaiHeaderController";
+import { SustentAiController } from "../controllers/SustentAiController";
 
 const router = Router();
 
@@ -70,6 +71,27 @@ router.put(
   "/sustentai/header",
   adminAuthMiddleware,
   SustentaiHeaderController.update,
+);
+
+// Rotas para cards (admin)
+router.get(
+  "/sustentai/cards",
+  adminAuthMiddleware,
+  SustentAiController.getAll,
+);
+
+router.post(
+  "/sustentai/cards",
+  adminAuthMiddleware,
+  upload.single("imagem"),
+  SustentAiController.create,
+);
+
+router.put(
+  "/sustentai/cards/:id",
+  adminAuthMiddleware,
+  upload.single("imagem"),
+  SustentAiController.update,
 );
 
 export default router;

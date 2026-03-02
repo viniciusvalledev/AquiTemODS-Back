@@ -2,6 +2,8 @@ import Usuario from "./Usuario.entity";
 import Projeto from "./Projeto.entity";
 import Avaliacao from "./Avaliacao.entity";
 import ImagemProjeto from "./ImagemProjeto.entity";
+import SustentaiAcao from "./SustentaiAcao.entity";
+import SustentAi from "./SustentAi.entity";
 
 Usuario.hasMany(Avaliacao, { foreignKey: "usuarioId", as: "avaliacoes" });
 Avaliacao.belongsTo(Usuario, { foreignKey: "usuarioId", as: "usuario" });
@@ -21,4 +23,4 @@ Projeto.hasMany(ImagemProjeto, {
 });
 ImagemProjeto.belongsTo(Projeto, { foreignKey: "projetoId" });
 
-export { Usuario, Projeto, Avaliacao, ImagemProjeto };
+export { Usuario, Projeto, Avaliacao, ImagemProjeto, SustentaiAcao, SustentAi };

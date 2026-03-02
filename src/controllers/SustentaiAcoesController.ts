@@ -24,9 +24,9 @@ export class SustentaiAcoesController {
         order: [["createdAt", "DESC"]],
       });
       return res.status(200).json(acoes);
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Erro ao buscar ações." });
+    } catch (error: any) {
+      console.error('[SustentaiAcoesController.getAll] error:', error);
+      return res.status(500).json({ message: "Erro ao buscar ações.", detail: error.message || String(error) });
     }
   }
 
@@ -69,10 +69,9 @@ export class SustentaiAcoesController {
         imagemUrl,
       } = req.body;
 
-      // Exigir apenas título e descrição; os demais campos são opcionais
+      // Exigir apenas título; descrição pode ficar vazia
       const missing: string[] = [];
       if (!titulo) missing.push('titulo');
-      if (!descricao) missing.push('descricao');
       if (missing.length > 0) {
         return res.status(400).json({ message: 'Campos obrigatórios não informados.', missing });
       }
@@ -95,7 +94,7 @@ export class SustentaiAcoesController {
       const defaults = {
         titulo,
         slug,
-        descricao,
+        descricao: descricao ?? "",
         imagemUrl: finalImagemUrl ?? "",
         linkTexto: linkTexto ?? "",
         linkDestino: linkDestino ?? "",

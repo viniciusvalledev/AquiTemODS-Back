@@ -65,6 +65,7 @@ SustentaiAcao.init(
       allowNull: true,
       field: "cor_borda",
     },
+    // NOTE: `cardId` intentionally removed to avoid querying a non-existent column in the database.
   },
   {
     sequelize,
