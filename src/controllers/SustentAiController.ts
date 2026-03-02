@@ -24,12 +24,17 @@ export class SustentAiController {
     try {
       const { titulo, linkDestino } = req.body;
 
+      // aceita arquivos (imagem ou pdf)
       if (!req.file)
-        return res.status(400).json({ message: "Imagem é obrigatória." });
-      if (!titulo || !linkDestino)
+        return res.status(400).json({ message: "Arquivo é obrigatório." });
+
+      const isPdf = req.file.mimetype === "application/pdf";
+
+      // linkDestino é obrigatório apenas para imagens; para PDF opcional
+      if (!titulo || (!linkDestino && !isPdf))
         return res
           .status(400)
-          .json({ message: "Título e Link são obrigatórios." });
+          .json({ message: "Título e Link são obrigatórios (Link opcional para PDF)." });
 
       const slug = toSlug(titulo);
       const baseDir = path.resolve(
@@ -53,7 +58,7 @@ export class SustentAiController {
 
       const novoCard = await SustentAi.create({
         titulo,
-        linkDestino,
+        linkDestino: linkDestino ?? "",
         imagemUrl: dbImageUrl,
       });
 

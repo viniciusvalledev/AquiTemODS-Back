@@ -19,13 +19,23 @@ const router = Router();
 
 router.get("/", SustentAiController.getAll);
 
-// Rota POST (Criar) - agora apenas admin via adminSustentai.routes.ts
-// router.post(
-//   "/",
-//   adminAuthMiddleware,
-//   upload.single("imagem"),
-//   SustentAiController.create,
-// );
+// Rota pública para listar newsletters (mantém compatibilidade com `/`)
+router.get("/newsletter", SustentAiController.getAll);
+
+// Rotas para criar e editar newsletters (requer admin)
+router.post(
+  "/newsletter",
+  adminAuthMiddleware,
+  upload.single("imagem"),
+  SustentAiController.create,
+);
+
+router.put(
+  "/newsletter/:id",
+  adminAuthMiddleware,
+  upload.single("imagem"),
+  SustentAiController.update,
+);
 
 router.post("/click-nav", SustentAiController.registerNavClick);
 router.post("/click-card/:id", SustentAiController.registerCardClick);

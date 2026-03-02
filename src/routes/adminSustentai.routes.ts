@@ -20,9 +20,16 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req: any, file: Express.Multer.File, cb: any) => {
-  const allowedMimes = ["image/jpeg", "image/pjpeg", "image/png", "image/webp", "image/jpg"];
+  const allowedMimes = [
+    "image/jpeg",
+    "image/pjpeg",
+    "image/png",
+    "image/webp",
+    "image/jpg",
+    "application/pdf",
+  ];
   if (allowedMimes.includes(file.mimetype)) return cb(null, true);
-  return cb(new Error("Formato inválido de imagem."), false);
+  return cb(new Error("Formato inválido de arquivo. Use imagem (jpg/png/webp) ou PDF."), false);
 };
 
 const upload = multer({ storage, fileFilter });

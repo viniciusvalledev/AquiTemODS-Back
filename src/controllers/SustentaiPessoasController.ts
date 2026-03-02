@@ -121,7 +121,17 @@ export class SustentaiPessoasController {
 
       if (!pessoa) return res.status(404).json({ message: "Pessoa não encontrada." });
 
-      if (pessoa.imagemUrl) {
+      // Remover pasta inteira associada à pessoa (slug baseado no nome)
+      const slug = toSlug(pessoa.nome);
+      const dirPath = path.resolve(process.cwd(), "uploads", "sustentai", "pessoas", slug);
+      if (fs.existsSync(dirPath)) {
+        try {
+          fs.rmSync(dirPath, { recursive: true, force: true });
+        } catch (err) {
+          console.warn('Falha ao remover diretório da pessoa:', err);
+        }
+      } else if (pessoa.imagemUrl) {
+        // fallback: remover arquivo único se pasta não existir
         const filePath = path.resolve(process.cwd(), pessoa.imagemUrl.replace(/^\//, ""));
         if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
       }
