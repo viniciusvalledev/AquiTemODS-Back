@@ -67,6 +67,7 @@ export class SustentaiAcoesController {
         corFundo,
         corBorda,
         imagemUrl,
+        tag,
       } = req.body;
 
       // Exigir apenas título; descrição pode ficar vazia
@@ -101,6 +102,7 @@ export class SustentaiAcoesController {
         corDestaque: corDestaque ?? "",
         corFundo: corFundo ?? "",
         corBorda: corBorda ?? "",
+        tag: tag ?? null,
       };
 
       const [novaAcao, created] = await SustentaiAcao.findOrCreate({ where: { titulo }, defaults });
@@ -138,6 +140,7 @@ export class SustentaiAcoesController {
         corFundo,
         corBorda,
         imagemUrl,
+        tag,
       } = req.body;
 
       const acao = await SustentaiAcao.findByPk(id);
@@ -189,6 +192,7 @@ export class SustentaiAcoesController {
         corDestaque: (corDestaque ?? acao.corDestaque) ?? "",
         corFundo: (corFundo ?? acao.corFundo) ?? "",
         corBorda: (corBorda ?? acao.corBorda) ?? "",
+        tag: tag ?? acao.tag ?? null,
       });
 
       return res.status(200).json(acao);

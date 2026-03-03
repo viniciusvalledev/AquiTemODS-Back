@@ -12,6 +12,7 @@ class SustentaiAcao extends Model {
   public corDestaque?: string | null;
   public corFundo?: string | null;
   public corBorda?: string | null;
+  public tag?: string | null;
 }
 
 SustentaiAcao.init(
@@ -64,6 +65,10 @@ SustentaiAcao.init(
       type: DataTypes.STRING,
       allowNull: true,
       field: "cor_borda",
+    },
+    tag: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     // NOTE: `cardId` intentionally removed to avoid querying a non-existent column in the database.
   },
