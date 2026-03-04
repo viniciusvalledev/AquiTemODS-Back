@@ -5,7 +5,6 @@ import dotenv from "dotenv";
 import sequelize from "./config/database";
 import cursoRoutes from "./routes/Curso.routes";
 
-
 dotenv.config({ path: path.resolve(__dirname, "..", ".env.local") });
 dotenv.config();
 
@@ -37,7 +36,7 @@ sequelize
   .then(() => {
     console.log("Conexão com o banco estabelecida com sucesso!");
 
-    const PORT = process.env.PORT || 3000;
+    const PORT = process.env.PORT;
     app.listen(PORT, () => {
       console.log(`Servidor rodando na porta ${PORT}`);
     });
@@ -56,7 +55,6 @@ app.use("/api/sustentai", sustentaiAcoesConteudoRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin", adminSustentaiRoutes);
 app.use("/api/admin", adminSustentaiAcoesConteudoRoutes);
-
 
 app.use("/api/users", authMiddleware, userRoutes);
 app.use("/uploads", express.static(path.resolve(__dirname, "..", "uploads")));

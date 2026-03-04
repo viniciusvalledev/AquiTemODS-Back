@@ -47,7 +47,7 @@ Projeto.init(
       allowNull: true,
     },
     prefeitura: {
-      type: DataTypes.STRING(18),
+      type: DataTypes.STRING(180),
       allowNull: true,
     },
     secretaria: {
@@ -80,7 +80,7 @@ Projeto.init(
       allowNull: true,
     },
     descricao: {
-      type: DataTypes.STRING(3000),
+      type: DataTypes.STRING(5000),
       allowNull: true,
     },
     venceuPspe: {
@@ -129,13 +129,13 @@ Projeto.init(
       allowNull: true,
     },
     apoio_planejamento: {
-      type: DataTypes.TEXT,
-      allowNull: false,
+      type: DataTypes.TEXT("long"),
+      allowNull: true,
       field: "apoio_planejamento",
     },
     escala: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       defaultValue: 0,
       field: "escala",
     },
@@ -144,7 +144,7 @@ Projeto.init(
     sequelize,
     tableName: "projeto",
     timestamps: true,
-  }
+  },
 );
 
 export default Projeto;

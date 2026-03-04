@@ -4,10 +4,11 @@ import sequelize from "../config/database";
 class Curso extends Model {
   public id!: number;
   public titulo!: string;
+  public tag!: string;
   public linkDestino!: string;
   public imagemUrl!: string;
   public visualizacoes!: number;
-  public ativo!: boolean; 
+  public ativo!: boolean;
 }
 
 Curso.init(
@@ -21,6 +22,10 @@ Curso.init(
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
+    },
+    tag: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     linkDestino: {
       type: DataTypes.STRING,
@@ -40,14 +45,14 @@ Curso.init(
     ativo: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: true, 
+      defaultValue: true,
     },
   },
   {
     sequelize,
     tableName: "cursos",
     timestamps: true,
-  }
+  },
 );
 
 export default Curso;
