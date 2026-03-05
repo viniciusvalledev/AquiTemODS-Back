@@ -12,6 +12,7 @@ class SustentaiAcao extends Model {
   public corDestaque?: string | null;
   public corFundo?: string | null;
   public corBorda?: string | null;
+  public corTexto?: string | null;
   public tag?: string | null;
 }
 
@@ -25,7 +26,6 @@ SustentaiAcao.init(
     titulo: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     slug: {
       type: DataTypes.STRING,
@@ -65,6 +65,11 @@ SustentaiAcao.init(
       type: DataTypes.STRING,
       allowNull: true,
       field: "cor_borda",
+    },
+    corTexto: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: "cor_texto",
     },
     tag: {
       type: DataTypes.STRING,

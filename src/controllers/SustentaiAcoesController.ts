@@ -25,8 +25,11 @@ export class SustentaiAcoesController {
       });
       return res.status(200).json(acoes);
     } catch (error: any) {
-      console.error('[SustentaiAcoesController.getAll] error:', error);
-      return res.status(500).json({ message: "Erro ao buscar ações.", detail: error.message || String(error) });
+      console.error("[SustentaiAcoesController.getAll] error:", error);
+      return res.status(500).json({
+        message: "Erro ao buscar ações.",
+        detail: error.message || String(error),
+      });
     }
   }
 
@@ -38,7 +41,8 @@ export class SustentaiAcoesController {
         ? await SustentaiAcao.findByPk(id)
         : await SustentaiAcao.findOne({ where: { slug: id } });
 
-      if (!acao) return res.status(404).json({ message: "Ação não encontrada." });
+      if (!acao)
+        return res.status(404).json({ message: "Ação não encontrada." });
 
       return res.status(200).json(acao);
     } catch (error) {
@@ -49,13 +53,11 @@ export class SustentaiAcoesController {
 
   static async create(req: Request, res: Response) {
     try {
-      console.log('[SustentaiAcoesController.create] req.headers:', req.headers);
-      console.log('[SustentaiAcoesController.create] req.body:', req.body);
-      console.log('[SustentaiAcoesController.create] req.file:', req.file);
-
       // Proteção: não permita criar quando o cliente enviar um `id` (indica request inválida/duplicada)
       if (req.body && (req.body.id || req.body.projetoId)) {
-        return res.status(400).json({ message: 'Requisição inválida: não envie `id` ao criar.' });
+        return res
+          .status(400)
+          .json({ message: "Requisição inválida: não envie `id` ao criar." });
       }
 
       const {
@@ -66,22 +68,31 @@ export class SustentaiAcoesController {
         corDestaque,
         corFundo,
         corBorda,
+        corTexto,
         imagemUrl,
         tag,
       } = req.body;
 
       // Exigir apenas título; descrição pode ficar vazia
       const missing: string[] = [];
-      if (!titulo) missing.push('titulo');
+      if (!titulo) missing.push("titulo");
       if (missing.length > 0) {
-        return res.status(400).json({ message: 'Campos obrigatórios não informados.', missing });
+        return res
+          .status(400)
+          .json({ message: "Campos obrigatórios não informados.", missing });
       }
-
-      const slug = toSlug(titulo);
+      const baseSlug = toSlug(titulo);
+      const slug = `${baseSlug}-${Date.now()}`;
       let finalImagemUrl = imagemUrl || null;
 
       if (req.file) {
-        const baseDir = path.resolve(process.cwd(), "uploads", "sustentai", "acoes", slug);
+        const baseDir = path.resolve(
+          process.cwd(),
+          "uploads",
+          "sustentai",
+          "acoes",
+          slug,
+        );
         ensureDir(baseDir);
 
         const newFilename = `${Date.now()}-${req.file.originalname}`;
@@ -102,28 +113,17 @@ export class SustentaiAcoesController {
         corDestaque: corDestaque ?? "",
         corFundo: corFundo ?? "",
         corBorda: corBorda ?? "",
+        corTexto: corTexto ?? "",
         tag: tag ?? null,
       };
 
-      const [novaAcao, created] = await SustentaiAcao.findOrCreate({ where: { titulo }, defaults });
-
-      if (!created) {
-        // limpamos arquivo salvo se o registro não foi criado
-        if (finalImagemUrl && finalImagemUrl.startsWith('/uploads/')) {
-          try {
-            const filePath = path.resolve(process.cwd(), finalImagemUrl.replace(/^\//, ''));
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-          } catch (err) {
-            console.warn('Falha ao limpar arquivo não utilizado:', err);
-          }
-        }
-        return res.status(409).json({ message: 'Já existe uma ação com este título.' });
-      }
+      const novaAcao = await SustentaiAcao.create(defaults);
 
       return res.status(201).json(novaAcao);
     } catch (error: any) {
       console.error(error);
-      if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      if (req.file && fs.existsSync(req.file.path))
+        fs.unlinkSync(req.file.path);
       return res.status(500).json({ message: "Erro ao criar ação." });
     }
   }
@@ -139,40 +139,71 @@ export class SustentaiAcoesController {
         corDestaque,
         corFundo,
         corBorda,
+        corTexto,
         imagemUrl,
         tag,
       } = req.body;
 
       const acao = await SustentaiAcao.findByPk(id);
-      if (!acao) return res.status(404).json({ message: "Ação não encontrada." });
+      if (!acao)
+        return res.status(404).json({ message: "Ação não encontrada." });
 
       let currentSlug = acao.slug;
-      let newSlug = titulo ? toSlug(titulo) : currentSlug;
+
+      let newSlug =
+        titulo && titulo !== acao.titulo
+          ? `${toSlug(titulo)}-${Date.now()}`
+          : currentSlug;
+
       let finalImagemUrl = acao.imagemUrl;
 
       if (titulo && titulo !== acao.titulo && finalImagemUrl) {
-        const oldDir = path.resolve(process.cwd(), "uploads", "sustentai", "acoes", currentSlug);
-        const newDir = path.resolve(process.cwd(), "uploads", "sustentai", "acoes", newSlug);
+        const oldDir = path.resolve(
+          process.cwd(),
+          "uploads",
+          "sustentai",
+          "acoes",
+          currentSlug,
+        );
+        const newDir = path.resolve(
+          process.cwd(),
+          "uploads",
+          "sustentai",
+          "acoes",
+          newSlug,
+        );
 
         if (fs.existsSync(oldDir) && !fs.existsSync(newDir)) {
           fs.renameSync(oldDir, newDir);
         }
 
         if (finalImagemUrl.includes(`/acoes/${currentSlug}/`)) {
-          finalImagemUrl = finalImagemUrl.replace(`/acoes/${currentSlug}/`, `/acoes/${newSlug}/`);
+          finalImagemUrl = finalImagemUrl.replace(
+            `/acoes/${currentSlug}/`,
+            `/acoes/${newSlug}/`,
+          );
         }
         currentSlug = newSlug;
       }
 
       if (req.file) {
-        const baseDir = path.resolve(process.cwd(), "uploads", "sustentai", "acoes", currentSlug);
+        const baseDir = path.resolve(
+          process.cwd(),
+          "uploads",
+          "sustentai",
+          "acoes",
+          currentSlug,
+        );
         ensureDir(baseDir);
 
         const newFilename = `${Date.now()}-${req.file.originalname}`;
         const newPath = path.join(baseDir, newFilename);
 
         if (acao.imagemUrl) {
-          const oldFile = path.resolve(process.cwd(), acao.imagemUrl.replace(/^\//, ""));
+          const oldFile = path.resolve(
+            process.cwd(),
+            acao.imagemUrl.replace(/^\//, ""),
+          );
           if (fs.existsSync(oldFile)) fs.unlinkSync(oldFile);
         }
 
@@ -187,18 +218,20 @@ export class SustentaiAcoesController {
         slug: newSlug,
         descricao: descricao ?? acao.descricao,
         imagemUrl: finalImagemUrl ?? "",
-        linkTexto: (linkTexto ?? acao.linkTexto) ?? "",
-        linkDestino: (linkDestino ?? acao.linkDestino) ?? "",
-        corDestaque: (corDestaque ?? acao.corDestaque) ?? "",
-        corFundo: (corFundo ?? acao.corFundo) ?? "",
-        corBorda: (corBorda ?? acao.corBorda) ?? "",
+        linkTexto: linkTexto ?? acao.linkTexto ?? "",
+        linkDestino: linkDestino ?? acao.linkDestino ?? "",
+        corDestaque: corDestaque ?? acao.corDestaque ?? "",
+        corFundo: corFundo ?? acao.corFundo ?? "",
+        corBorda: corBorda ?? acao.corBorda ?? "",
+        corTexto: corTexto ?? acao.corTexto ?? "",
         tag: tag ?? acao.tag ?? null,
       });
 
       return res.status(200).json(acao);
     } catch (error: any) {
       console.error(error);
-      if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      if (req.file && fs.existsSync(req.file.path))
+        fs.unlinkSync(req.file.path);
       return res.status(500).json({ message: "Erro ao atualizar ação." });
     }
   }
@@ -208,12 +241,20 @@ export class SustentaiAcoesController {
       const { id } = req.params;
       const acao = await SustentaiAcao.findByPk(id);
 
-      if (!acao) return res.status(404).json({ message: "Ação não encontrada." });
+      if (!acao)
+        return res.status(404).json({ message: "Ação não encontrada." });
 
       const slug = acao.slug;
-      const dirPath = path.resolve(process.cwd(), "uploads", "sustentai", "acoes", slug);
+      const dirPath = path.resolve(
+        process.cwd(),
+        "uploads",
+        "sustentai",
+        "acoes",
+        slug,
+      );
 
-      if (fs.existsSync(dirPath)) fs.rmSync(dirPath, { recursive: true, force: true });
+      if (fs.existsSync(dirPath))
+        fs.rmSync(dirPath, { recursive: true, force: true });
 
       await acao.destroy();
       return res.status(200).json({ message: "Ação removida com sucesso." });
