@@ -33,6 +33,24 @@ export class SustentaiAcoesController {
     }
   }
 
+  // Novo: endpoint público para incrementar cliques
+  static async registerClick(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const acao = await SustentaiAcao.findByPk(id);
+      if (!acao) return res.status(404).json({ message: "Ação não encontrada." });
+
+      // incremento atômico
+      await acao.increment("cliques");
+      await acao.reload();
+
+      return res.status(200).json({ id: acao.id, cliques: acao.getDataValue("cliques") });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Erro ao registrar clique." });
+    }
+  }
+
   static async getByIdOrSlug(req: Request, res: Response) {
     try {
       const { id } = req.params;
@@ -81,6 +99,13 @@ export class SustentaiAcoesController {
           .status(400)
           .json({ message: "Campos obrigatórios não informados.", missing });
       }
+
+      // Não permitir títulos duplicados
+      const existing = await SustentaiAcao.findOne({ where: { titulo } });
+      if (existing) {
+        return res.status(400).json({ message: "Já existe uma ação com este título." });
+      }
+
       const baseSlug = toSlug(titulo);
       const slug = `${baseSlug}-${Date.now()}`;
       let finalImagemUrl = imagemUrl || null;
@@ -124,6 +149,11 @@ export class SustentaiAcoesController {
       console.error(error);
       if (req.file && fs.existsSync(req.file.path))
         fs.unlinkSync(req.file.path);
+
+      if (error.name === "SequelizeUniqueConstraintError") {
+        return res.status(400).json({ message: "Já existe uma ação com este título." });
+      }
+
       return res.status(500).json({ message: "Erro ao criar ação." });
     }
   }
@@ -147,6 +177,14 @@ export class SustentaiAcoesController {
       const acao = await SustentaiAcao.findByPk(id);
       if (!acao)
         return res.status(404).json({ message: "Ação não encontrada." });
+
+      // Se o título for alterado, garantir que não existe outro com o mesmo titulo
+      if (titulo && titulo !== acao.titulo) {
+        const other = await SustentaiAcao.findOne({ where: { titulo } });
+        if (other && other.id !== acao.id) {
+          return res.status(400).json({ message: "Já existe outra ação com este título." });
+        }
+      }
 
       let currentSlug = acao.slug;
 

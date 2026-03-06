@@ -3,6 +3,7 @@ import { SustentAiController } from "../controllers/SustentAiController";
 import { adminAuthMiddleware } from "../middlewares/adminAuth.middleware";
 import multer from "multer";
 import path from "path";
+import { SustentaiAcoesController } from "../controllers/SustentaiAcoesController";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -39,6 +40,12 @@ router.put(
 
 router.post("/click-nav", SustentAiController.registerNavClick);
 router.post("/click-card/:id", SustentAiController.registerCardClick);
+
+// --- NOVAS ROTAS PÚBLICAS PARA AÇÕES ---
+router.get("/acoes", SustentaiAcoesController.getAll);
+router.post("/acoes/:id/click", SustentaiAcoesController.registerClick);
+// rota alternativa que o front já usa
+router.post("/acoes/:id/click-card", SustentaiAcoesController.registerClick);
 
 // Rota PUT (Editar) - agora apenas admin via adminSustentai.routes.ts
 // router.put(

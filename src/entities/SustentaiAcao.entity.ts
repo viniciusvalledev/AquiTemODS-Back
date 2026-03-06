@@ -14,6 +14,7 @@ class SustentaiAcao extends Model {
   public corBorda?: string | null;
   public corTexto?: string | null;
   public tag?: string | null;
+  public cliques!: number;
 }
 
 SustentaiAcao.init(
@@ -26,6 +27,7 @@ SustentaiAcao.init(
     titulo: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
     },
     slug: {
       type: DataTypes.STRING,
@@ -74,6 +76,11 @@ SustentaiAcao.init(
     tag: {
       type: DataTypes.STRING,
       allowNull: true,
+    },
+    cliques: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
     // NOTE: `cardId` intentionally removed to avoid querying a non-existent column in the database.
   },

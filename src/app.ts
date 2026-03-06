@@ -20,6 +20,7 @@ import sustentAiRoutes from "./routes/sustentai.routes";
 import sustentaiAcoesConteudoRoutes from "./routes/SustentaiConteudo.routes";
 import adminSustentaiRoutes from "./routes/adminSustentai.routes";
 import adminSustentaiAcoesConteudoRoutes from "./routes/adminSustentaiAcoesConteudo.routes";
+import sustentaiBlocosRoutes from "./routes/sustentaiBlocos.routes";
 
 const app = express();
 const uploadsPath = path.resolve(process.cwd(), "uploads");
@@ -51,6 +52,7 @@ app.use("/api/avaliacoes", avaliacaoRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/sustentai", sustentAiRoutes);
 app.use("/api/sustentai", sustentaiAcoesConteudoRoutes);
+app.use("/api/sustentai", sustentaiBlocosRoutes);
 
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin", adminSustentaiRoutes);
