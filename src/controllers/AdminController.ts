@@ -123,53 +123,41 @@ export class AdminController {
         transaction,
         include: [{ model: ImagemProjeto, as: "projetoImg" }],
       });
+
       if (!projeto) {
         await transaction.rollback();
         return res.status(404).json({ message: "Projeto não encontrado." });
       }
-      let emailInfo: { subject: string; html: string } | null = null;
+
+      const statusAnterior = projeto.status;
 
       switch (projeto.status) {
         case StatusProjeto.PENDENTE_APROVACAO:
           projeto.status = StatusProjeto.ATIVO;
           projeto.ativo = true;
           await projeto.save({ transaction });
-
-          emailInfo = {
-            subject: "Seu cadastro no Aqui Tem ODS foi Aprovado!",
-            html: `
-              <h1>Olá, ${projeto.prefeitura}!</h1> 
-              <p>Temos uma ótima notícia: o seu projeto, <strong>${projeto.nomeProjeto}</strong>, foi aprovado e já está visível na nossa plataforma!</p>
-              <p>O ID do seu projeto é: <strong>${projeto.projetoId}</strong>.<p><strong>Atenção:</strong> É muito importante que você guarde este número de ID em um local seguro. Ele será <strong>NECESSÁRIO</strong> sempre que você precisar solicitar uma <strong>atualização</strong> ou a <strong>exclusão</strong> do seu projeto em nossa plataforma. Sem ele, não será possível realizar essas ações.</p>
-              <p>Agradecemos por fazer parte do Aqui Tem ODS.</p>
-              <br>
-              <p>Atenciosamente,</p>
-              <p><strong>Equipe AquitemODS.</strong></p>
-            `,
-          };
           break;
 
         case StatusProjeto.PENDENTE_ATUALIZACAO:
           if (projeto.dados_atualizacao) {
             const dadosRecebidos = projeto.dados_atualizacao as any;
 
-            //  Inicializa vazio para atualização seletiva
+            // Inicializa vazio para atualização seletiva
             const dadosParaAtualizar: Partial<Projeto> & {
               [key: string]: any;
             } = {};
 
-            //  *** CORREÇÃO: ADICIONADO CAMPOS FALTANTES ***
             const camposPermitidos: (keyof Projeto | string)[] = [
-              "nomeProjeto", // Adicionado
-              "prefeitura", // Adicionado
-              "secretaria", // Adicionado
-              "responsavelProjeto", // Adicionado
-              "emailContato", // Adicionado
-              "linkProjeto", // Adicionado
-              "endereco", // Adicionado
-              "ods", // Adicionado
-              "apoio_planejamento", // Adicionado
-              "escala", // Adicionado
+              "nomeProjeto",
+              "prefeitura",
+              "secretaria",
+              "responsavelProjeto",
+              "emailContato",
+              "linkProjeto",
+              "endereco",
+              "ods",
+              "apoio_planejamento",
+              "escala",
               "descricaoDiferencial",
               "descricao",
               "objetivo",
@@ -187,7 +175,7 @@ export class AdminController {
               "venceuPspe",
             ];
 
-            //  Copia apenas os campos permitidos e existentes
+            // Copia apenas os campos permitidos e existentes
             for (const key of camposPermitidos) {
               if (
                 dadosRecebidos.hasOwnProperty(key) &&
@@ -219,7 +207,7 @@ export class AdminController {
               dadosParaAtualizar.logoUrl = dadosRecebidos.logo;
             }
 
-            // *** CORREÇÃO: LÓGICA PARA OFÍCIO ***
+            // Lógica para OFÍCIO
             if (dadosRecebidos.oficio) {
               const oficioAntigoUrl = projeto.oficioUrl;
               if (oficioAntigoUrl) {
@@ -290,37 +278,9 @@ export class AdminController {
             projeto.ativo = true;
             await projeto.save({ transaction });
           }
-
-          emailInfo = {
-            subject:
-              "Sua solicitação de atualização no Aqui Tem ODS foi Aprovada!",
-            html: `
-              <h1>Olá, ${projeto.prefeitura}!</h1>
-              <p>A sua solicitação para atualizar os dados do projeto <strong>${projeto.nomeProjeto}</strong> foi aprovada.</p>
-              <p>As novas informações já estão visíveis para todos na plataforma.</p>
-              <p>Relembrando, o ID do seu projeto é: <strong>${projeto.projetoId}</strong>.</p> 
-              <p>Ele será <strong>NECESSÁRIO</strong> sempre que você precisar solicitar uma <strong>atualização</strong> ou a <strong>exclusão</strong> do seu projeto em nossa plataforma. Sem ele, não será possível realizar essas ações.</p>
-              <br>
-              <p>Agradecemos por fazer parte do Aqui Tem ODS.</p>
-              <p>Atenciosamente,</p>
-              <p><strong>Equipe Aqui Tem ODS</strong></p>
-            `,
-          };
           break;
 
         case StatusProjeto.PENDENTE_EXCLUSAO:
-          emailInfo = {
-            subject: "Seu projeto foi removido da plataforma Aqui Tem ODS",
-            html: `
-              <h1>Olá, ${projeto.prefeitura}.</h1> 
-              <p>Informamos que a sua solicitação para remover o projeto <strong>${projeto.nomeProjeto}</strong> da nossa plataforma foi concluída com sucesso.</p>
-              <p>Lamentamos a sua partida e esperamos poder colaborar com você novamente no futuro.</p>
-              <br>
-              <p>Atenciosamente,</p>
-              <p><strong>Equipe AquitemODS</strong></p>
-            `,
-          };
-
           await deleteProjectFolder(projeto.ods, projeto.nomeProjeto);
           await projeto.destroy({ transaction });
           responseMessage = "Projeto excluído com sucesso.";
@@ -329,13 +289,30 @@ export class AdminController {
 
       await transaction.commit();
 
-      if (emailInfo && projeto.emailContato) {
+      // Envio de E-mails usando o EmailService refatorado
+      if (projeto.emailContato) {
         try {
-          await EmailService.sendGenericEmail({
-            to: projeto.emailContato,
-            subject: emailInfo.subject,
-            html: emailInfo.html,
-          });
+          if (statusAnterior === StatusProjeto.PENDENTE_APROVACAO) {
+            await EmailService.sendProjectApprovedEmail(
+              projeto.emailContato,
+              projeto.prefeitura,
+              projeto.nomeProjeto,
+              projeto.projetoId.toString(),
+            );
+          } else if (statusAnterior === StatusProjeto.PENDENTE_ATUALIZACAO) {
+            await EmailService.sendProjectUpdateApprovedEmail(
+              projeto.emailContato,
+              projeto.prefeitura,
+              projeto.nomeProjeto,
+              projeto.projetoId.toString(),
+            );
+          } else if (statusAnterior === StatusProjeto.PENDENTE_EXCLUSAO) {
+            await EmailService.sendProjectDeletedEmail(
+              projeto.emailContato,
+              projeto.prefeitura,
+              projeto.nomeProjeto,
+            );
+          }
           console.log(
             `Email de notificação enviado com sucesso para ${projeto.emailContato}`,
           );
@@ -374,7 +351,6 @@ export class AdminController {
         return res.status(404).json({ message: "Projeto não encontrado." });
       }
 
-      let emailInfo: { subject: string; html: string } | null = null;
       const statusOriginal = projeto.status;
       const dadosRecebidos = (projeto.dados_atualizacao || {}) as any;
 
@@ -493,38 +469,29 @@ export class AdminController {
         { transaction },
       );
 
-      if (statusOriginal === StatusProjeto.PENDENTE_APROVACAO) {
-        emailInfo = {
-          subject: "Seu cadastro no Aqui Tem ODS foi Aprovado!",
-          html: `<h1>Olá, ${projeto.prefeitura}!</h1> <p>Temos uma ótima notícia: o seu projeto, <strong>${projeto.nomeProjeto}</strong>, foi aprovado e já está visível na nossa plataforma!</p><p>O ID do seu projeto é: <strong>${projeto.projetoId}</strong>.<p><strong>Atenção:</strong> É muito importante que você guarde este número de ID em um local seguro. Ele será <strong>NECESSÁRIO</strong> sempre que você precisar solicitar uma <strong>atualização</strong> ou a <strong>exclusão</strong> do seu projeto em nossa plataforma. Sem ele, não será possível realizar essas ações.</p><p>Agradecemos por fazer parte do Aqui Tem ODS.</p><br><p>Atenciosamente,</p><p><strong>Equipe Aqui Tem ODS.</strong></p>`,
-        };
-      } else if (statusOriginal === StatusProjeto.PENDENTE_ATUALIZACAO) {
-        emailInfo = {
-          subject:
-            "Sua solicitação de atualização no Aqui Tem ODS foi Aprovada!",
-          html: `
-            <h1>Olá, ${projeto.prefeitura}!</h1>
-            <p>A sua solicitação para atualizar os dados do projeto <strong>${projeto.nomeProjeto}</strong> foi aprovada.</p>
-            <p>As novas informações já estão visíveis para todos na plataforma.</p>
-            <p>Relembrando, o ID do seu projeto é: <strong>${projeto.projetoId}</strong>.</p> 
-            <p>Ele será <strong>NECESSÁRIO</strong> sempre que você precisar solicitar uma <strong>atualização</strong> ou a <strong>exclusão</strong> do seu projeto em nossa plataforma. Sem ele, não será possível realizar essas ações.</p>
-            <br>
-            <p>Agradecemos por fazer parte do Aqui Tem ODS.</p>
-            <p>Atenciosamente,</p>
-            <p><strong>Equipe Aqui Tem ODS</strong></p>
-          `,
-        };
-      }
-
       await transaction.commit();
 
-      if (emailInfo && projeto.emailContato) {
+      // Envio de E-mails usando o EmailService refatorado
+      if (projeto.emailContato) {
         try {
-          await EmailService.sendGenericEmail({
-            to: projeto.emailContato,
-            subject: emailInfo.subject,
-            html: emailInfo.html,
-          });
+          if (statusOriginal === StatusProjeto.PENDENTE_APROVACAO) {
+            await EmailService.sendProjectApprovedEmail(
+              projeto.emailContato,
+              projeto.prefeitura,
+              projeto.nomeProjeto,
+              projeto.projetoId.toString(),
+            );
+          } else if (statusOriginal === StatusProjeto.PENDENTE_ATUALIZACAO) {
+            await EmailService.sendProjectUpdateApprovedEmail(
+              projeto.emailContato,
+              projeto.prefeitura,
+              projeto.nomeProjeto,
+              projeto.projetoId.toString(),
+            );
+          }
+          console.log(
+            `Email de notificação enviado com sucesso para ${projeto.emailContato}`,
+          );
         } catch (error) {
           console.error(
             `Falha ao enviar email de notificação para ${projeto.emailContato}:`,
@@ -674,6 +641,7 @@ export class AdminController {
     const { id } = req.params;
     const { motivoRejeicao } = req.body;
     const transaction = await sequelize.transaction();
+
     try {
       const projeto = await Projeto.findByPk(id, { transaction });
       if (!projeto) {
@@ -682,61 +650,21 @@ export class AdminController {
       }
 
       let responseMessage = "Solicitação rejeitada com sucesso.";
-      let emailInfo: { subject: string; html: string } | null = null;
       const emailParaNotificar = projeto.emailContato;
-      const motivoHtml = motivoRejeicao
-        ? `<p><strong>Motivo da Rejeição:</strong> ${motivoRejeicao}</p>`
-        : "<p>Para mais detalhes, entre em contato conosco.</p>";
+      const statusAnterior = projeto.status; // Guardamos para saber o que notificar no final
 
       if (projeto.status === StatusProjeto.PENDENTE_APROVACAO) {
         await deleteProjectFolder(projeto.ods, projeto.nomeProjeto);
 
         await projeto.destroy({ transaction });
         responseMessage = "Cadastro de projeto rejeitado e removido.";
-
-        emailInfo = {
-          subject: "Seu cadastro no Aqui Tem ODS foi Rejeitado",
-          html: `<h1>Olá, ${projeto.prefeitura}.</h1>
-                 <p>Lamentamos informar que o cadastro do projeto <strong>${projeto.nomeProjeto}</strong> não foi aprovado.</p>
-                 ${motivoHtml}
-                 <br>
-                 <p>Atenciosamente,</p>
-                 <p><strong>Equipe Aqui Tem ODS</strong></p>`,
-        };
       } else if (
         projeto.status === StatusProjeto.PENDENTE_ATUALIZACAO ||
         projeto.status === StatusProjeto.PENDENTE_EXCLUSAO
       ) {
-        const statusAnterior = projeto.status;
         projeto.status = StatusProjeto.ATIVO;
         projeto.dados_atualizacao = null;
         await projeto.save({ transaction });
-
-        if (statusAnterior === StatusProjeto.PENDENTE_ATUALIZACAO) {
-          emailInfo = {
-            subject:
-              "Sua solicitação de atualização no Aqui Tem ODS foi Rejeitada",
-            html: `<h1>Olá, ${projeto.prefeitura}.</h1>
-                   <p>Informamos que a sua solicitação para atualizar os dados do projeto <strong>${projeto.nomeProjeto}</strong> não foi aprovada.</p>
-                   <p>Os dados anteriores foram mantidos.</p>
-                   ${motivoHtml}
-                   <br>
-                   <p>Atenciosamente,</p>
-                   <p><strong>Equipe Aqui Tem ODS</strong></p>`,
-          };
-        } else {
-          emailInfo = {
-            subject:
-              "Sua solicitação de exclusão no Aqui Tem ODS foi Rejeitada",
-            html: `<h1>Olá, ${projeto.prefeitura}.</h1>
-                   <p>Informamos que a sua solicitação para remover o projeto <strong>${projeto.nomeProjeto}</strong> não foi aprovada.</p>
-                   <p>Seu projeto continua ativo na plataforma.</p>
-                   ${motivoHtml}
-                   <br>
-                   <p>Atenciosamente,</p>
-                   <p><strong>Equipe Aqui Tem ODS</strong></p>`,
-          };
-        }
       } else {
         await transaction.rollback();
         return res.status(400).json({
@@ -746,13 +674,27 @@ export class AdminController {
 
       await transaction.commit();
 
-      if (emailInfo && emailParaNotificar) {
+      // Envio do e-mail de rejeição pelo EmailService
+      if (emailParaNotificar) {
         try {
-          await EmailService.sendGenericEmail({
-            to: emailParaNotificar,
-            subject: emailInfo.subject,
-            html: emailInfo.html,
-          });
+          let tipoSolicitacao = "";
+
+          if (statusAnterior === StatusProjeto.PENDENTE_APROVACAO) {
+            tipoSolicitacao = "Cadastro";
+          } else if (statusAnterior === StatusProjeto.PENDENTE_ATUALIZACAO) {
+            tipoSolicitacao = "Atualização de Dados";
+          } else if (statusAnterior === StatusProjeto.PENDENTE_EXCLUSAO) {
+            tipoSolicitacao = "Exclusão do Projeto";
+          }
+
+          await EmailService.sendProjectRejectedEmail(
+            emailParaNotificar,
+            projeto.prefeitura,
+            projeto.nomeProjeto,
+            tipoSolicitacao,
+            motivoRejeicao,
+          );
+
           console.log(
             `Email de rejeição enviado com sucesso para ${emailParaNotificar}`,
           );
@@ -1318,22 +1260,11 @@ export class AdminController {
       usuario.confirmationToken = confirmationToken;
       await usuario.save();
 
-      const confirmUrl = `${process.env.FRONTEND_URL}/confirmar-conta?token=${confirmationToken}`;
-
-      const emailHtml = `
-        <h1>Confirmação de Conta (Reenvio Admin)</h1>
-        <p>Olá, ${usuario.nomeCompleto}.</p>
-        <p>Um administrador solicitou o reenvio do seu link de confirmação.</p>
-        <p>Por favor, confirme seu cadastro clicando no link abaixo:</p>
-        <a href="${confirmUrl}" target="_blank">Confirmar minha conta</a>
-        <p>Se você não solicitou isso, ignore este email.</p>
-      `;
-
-      await EmailService.sendGenericEmail({
-        to: usuario.email,
-        subject: "Confirme sua conta no MeideSaquá",
-        html: emailHtml,
-      });
+      await EmailService.sendAdminResendConfirmationEmail(
+        usuario.email,
+        usuario.nomeCompleto,
+        confirmationToken,
+      );
 
       return res
         .status(200)
