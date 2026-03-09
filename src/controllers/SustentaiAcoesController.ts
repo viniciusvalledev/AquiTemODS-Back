@@ -38,13 +38,16 @@ export class SustentaiAcoesController {
     try {
       const { id } = req.params;
       const acao = await SustentaiAcao.findByPk(id);
-      if (!acao) return res.status(404).json({ message: "Ação não encontrada." });
+      if (!acao)
+        return res.status(404).json({ message: "Ação não encontrada." });
 
       // incremento atômico
       await acao.increment("cliques");
       await acao.reload();
 
-      return res.status(200).json({ id: acao.id, cliques: acao.getDataValue("cliques") });
+      return res
+        .status(200)
+        .json({ id: acao.id, cliques: acao.getDataValue("cliques") });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: "Erro ao registrar clique." });
@@ -103,7 +106,9 @@ export class SustentaiAcoesController {
       // Não permitir títulos duplicados
       const existing = await SustentaiAcao.findOne({ where: { titulo } });
       if (existing) {
-        return res.status(400).json({ message: "Já existe uma ação com este título." });
+        return res
+          .status(400)
+          .json({ message: "Já existe uma ação com este título." });
       }
 
       const baseSlug = toSlug(titulo);
@@ -151,7 +156,9 @@ export class SustentaiAcoesController {
         fs.unlinkSync(req.file.path);
 
       if (error.name === "SequelizeUniqueConstraintError") {
-        return res.status(400).json({ message: "Já existe uma ação com este título." });
+        return res
+          .status(400)
+          .json({ message: "Já existe uma ação com este título." });
       }
 
       return res.status(500).json({ message: "Erro ao criar ação." });
@@ -178,51 +185,17 @@ export class SustentaiAcoesController {
       if (!acao)
         return res.status(404).json({ message: "Ação não encontrada." });
 
-      // Se o título for alterado, garantir que não existe outro com o mesmo titulo
       if (titulo && titulo !== acao.titulo) {
         const other = await SustentaiAcao.findOne({ where: { titulo } });
         if (other && other.id !== acao.id) {
-          return res.status(400).json({ message: "Já existe outra ação com este título." });
+          return res
+            .status(400)
+            .json({ message: "Já existe outra ação com este título." });
         }
       }
 
-      let currentSlug = acao.slug;
-
-      let newSlug =
-        titulo && titulo !== acao.titulo
-          ? `${toSlug(titulo)}-${Date.now()}`
-          : currentSlug;
-
+      const currentSlug = acao.slug;
       let finalImagemUrl = acao.imagemUrl;
-
-      if (titulo && titulo !== acao.titulo && finalImagemUrl) {
-        const oldDir = path.resolve(
-          process.cwd(),
-          "uploads",
-          "sustentai",
-          "acoes",
-          currentSlug,
-        );
-        const newDir = path.resolve(
-          process.cwd(),
-          "uploads",
-          "sustentai",
-          "acoes",
-          newSlug,
-        );
-
-        if (fs.existsSync(oldDir) && !fs.existsSync(newDir)) {
-          fs.renameSync(oldDir, newDir);
-        }
-
-        if (finalImagemUrl.includes(`/acoes/${currentSlug}/`)) {
-          finalImagemUrl = finalImagemUrl.replace(
-            `/acoes/${currentSlug}/`,
-            `/acoes/${newSlug}/`,
-          );
-        }
-        currentSlug = newSlug;
-      }
 
       if (req.file) {
         const baseDir = path.resolve(
@@ -247,13 +220,12 @@ export class SustentaiAcoesController {
 
         fs.renameSync(req.file.path, newPath);
         finalImagemUrl = `/uploads/sustentai/acoes/${currentSlug}/${newFilename}`;
-      } else if (imagemUrl) {
+      } else if (imagemUrl !== undefined) {
         finalImagemUrl = imagemUrl;
       }
 
       await acao.update({
         titulo: titulo ?? acao.titulo,
-        slug: newSlug,
         descricao: descricao ?? acao.descricao,
         imagemUrl: finalImagemUrl ?? "",
         linkTexto: linkTexto ?? acao.linkTexto ?? "",
