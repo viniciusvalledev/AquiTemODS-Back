@@ -21,7 +21,6 @@ Curso.init(
     titulo: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     tag: {
       type: DataTypes.STRING,
@@ -52,6 +51,13 @@ Curso.init(
     sequelize,
     tableName: "cursos",
     timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ["titulo"],
+        name: "cursos_titulo_unique",
+      },
+    ],
   },
 );
 

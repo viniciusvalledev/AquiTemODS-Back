@@ -19,7 +19,6 @@ SustentAi.init(
     titulo: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     linkDestino: {
       type: DataTypes.STRING,
@@ -41,6 +40,13 @@ SustentAi.init(
     sequelize,
     tableName: "sustentai_cards",
     timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ["titulo"],
+        name: "sustentai_cards_titulo_unique",
+      },
+    ],
   },
 );
 

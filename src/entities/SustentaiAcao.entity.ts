@@ -27,12 +27,10 @@ SustentaiAcao.init(
     titulo: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     slug: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     descricao: {
       type: DataTypes.TEXT,
@@ -82,12 +80,23 @@ SustentaiAcao.init(
       allowNull: false,
       defaultValue: 0,
     },
-    // NOTE: `cardId` intentionally removed to avoid querying a non-existent column in the database.
   },
   {
     sequelize,
     tableName: "sustentai_acoes",
     timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ["titulo"],
+        name: "sustentai_acoes_titulo_unique",
+      },
+      {
+        unique: true,
+        fields: ["slug"],
+        name: "sustentai_acoes_slug_unique",
+      },
+    ],
   },
 );
 
