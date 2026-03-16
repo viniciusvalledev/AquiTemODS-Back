@@ -11,13 +11,13 @@ router.get("/pending", adminAuthMiddleware, AdminController.getPending);
 router.post(
   "/approve/:id",
   adminAuthMiddleware,
-  AdminController.approveRequest
+  AdminController.approveRequest,
 );
 
 router.post(
   "/edit-and-approve/:id",
   adminAuthMiddleware,
-  AdminController.editAndApproveRequest
+  AdminController.editAndApproveRequest,
 );
 router.post("/reject/:id", adminAuthMiddleware, AdminController.rejectRequest);
 
@@ -25,58 +25,49 @@ router.post("/reject/:id", adminAuthMiddleware, AdminController.rejectRequest);
 router.get(
   "/projetos-ativos",
   adminAuthMiddleware,
-  AdminController.getAllActiveProjetos
+  AdminController.getAllActiveProjetos,
 );
 router.patch(
   "/projeto/:id",
   adminAuthMiddleware,
-  AdminController.adminUpdateProjeto
+  AdminController.adminUpdateProjeto,
 );
 router.delete(
   "/projeto/:id",
   adminAuthMiddleware,
-  AdminController.adminDeleteProjeto
+  AdminController.adminDeleteProjeto,
 );
 
 router.get(
   "/avaliacoes/projeto/:projetoId",
   adminAuthMiddleware,
-  AdminController.getAvaliacoesByProjeto
+  AdminController.getAvaliacoesByProjeto,
 );
 
 // Rota para admin excluir uma avaliação
 router.delete(
   "/avaliacoes/:id",
   adminAuthMiddleware,
-  AdminController.adminDeleteAvaliacao
+  AdminController.adminDeleteAvaliacao,
 );
 
 router.get(
   "/exportar-projetos",
   adminAuthMiddleware,
-  AdminController.exportActiveProjetos
+  AdminController.exportActiveProjetos,
 );
 
-router.get("/stats",  
-  adminAuthMiddleware, 
-  AdminController.getDashboardStats
-);
+router.get("/stats", adminAuthMiddleware, AdminController.getDashboardStats);
 
 router.get(
   "/prefeitura/:nome/projetos",
   adminAuthMiddleware,
-  AdminController.getProjetosByPrefeitura
+  AdminController.getProjetosByPrefeitura,
 );
 
-router.get(
-  "/users", 
-  adminAuthMiddleware, 
-  AdminController.getAllUsers);
+router.get("/users", adminAuthMiddleware, AdminController.getAllUsers);
 
-router.put(
-  "/users/:id", 
-  adminAuthMiddleware, 
-  AdminController.adminUpdateUser);
+router.put("/users/:id", adminAuthMiddleware, AdminController.adminUpdateUser);
 
 router.delete(
   "/users/:id",
@@ -93,6 +84,18 @@ router.post(
   "/users/:id/resend-confirmation",
   adminAuthMiddleware,
   AdminController.resendConfirmationEmail,
+);
+
+router.get(
+  "/projetos-geral",
+  adminAuthMiddleware,
+  AdminController.getAllProjetosGeral,
+);
+
+router.put(
+  "/projeto/:id/status",
+  adminAuthMiddleware,
+  AdminController.toggleProjetoStatus,
 );
 
 export default router;

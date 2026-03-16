@@ -7,6 +7,7 @@ export enum StatusProjeto {
   PENDENTE_ATUALIZACAO = "pendente_atualizacao",
   PENDENTE_EXCLUSAO = "pendente_exclusao",
   REJEITADO = "rejeitado",
+  INATIVO = "inativo",
 }
 
 class Projeto extends Model {

@@ -281,9 +281,12 @@ export class AdminController {
           break;
 
         case StatusProjeto.PENDENTE_EXCLUSAO:
-          await deleteProjectFolder(projeto.ods, projeto.nomeProjeto);
-          await projeto.destroy({ transaction });
-          responseMessage = "Projeto excluído com sucesso.";
+          projeto.status = StatusProjeto.INATIVO;
+          projeto.ativo = false;
+          projeto.dados_atualizacao = null;
+          await projeto.save({ transaction });
+
+          responseMessage = "Projeto desativado com sucesso (Inativo).";
           break;
       }
 
@@ -607,6 +610,43 @@ export class AdminController {
       await transaction.rollback();
       console.error("ERRO DURANTE A ATUALIZAÇÃO ADMIN:", error);
       return res.status(500).json({ message: "Erro ao atualizar o projeto." });
+    }
+  }
+
+  static async getAllProjetosGeral(req: Request, res: Response) {
+    try {
+      const projetos = await ProjetoService.listarParaAdminGeral();
+      return res.status(200).json(projetos);
+    } catch (error) {
+      console.error("Erro ao buscar todos os projetos:", error);
+      return res.status(500).json({ message: "Erro ao buscar projetos." });
+    }
+  }
+
+  // Alterna manualmente entre Ativo e Inativo
+  static async toggleProjetoStatus(req: Request, res: Response) {
+    try {
+      const id = parseInt(req.params.id);
+      const { ativo } = req.body;
+
+      if (typeof ativo !== "boolean") {
+        return res.status(400).json({
+          message:
+            "O corpo da requisição deve conter a chave 'ativo' com um valor booleano.",
+        });
+      }
+
+      const projeto = await ProjetoService.alterarStatusAtivo(id, ativo);
+
+      return res.status(200).json({
+        message: `Projeto ${ativo ? "ativado" : "desativado"} com sucesso.`,
+        projeto,
+      });
+    } catch (error: any) {
+      console.error("Erro ao alterar status do projeto:", error);
+      return res
+        .status(500)
+        .json({ message: error.message || "Erro ao alterar status." });
     }
   }
 

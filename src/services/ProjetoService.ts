@@ -3,7 +3,7 @@ import sequelize from "../config/database";
 import Projeto, { StatusProjeto } from "../entities/Projeto.entity";
 import ImagemProjeto from "../entities/ImagemProjeto.entity";
 import Avaliacao from "../entities/Avaliacao.entity";
-import Usuario from "../entities/Usuario.entity"; // Verifique se esta importação está correta e o ficheiro existe
+import Usuario from "../entities/Usuario.entity";
 
 class ProjetoService {
   public async cadastrarProjetoComImagens(dados: any): Promise<Projeto> {
@@ -40,7 +40,7 @@ class ProjetoService {
           [Op.and]: [
             sequelize.where(
               sequelize.fn("LOWER", sequelize.col("nome_projeto")),
-              sequelize.fn("LOWER", nomeProjeto)
+              sequelize.fn("LOWER", nomeProjeto),
             ),
           ],
         },
@@ -73,7 +73,7 @@ class ProjetoService {
 
   public async solicitarAtualizacaoPorId(
     id: number,
-    dadosAtualizacao: any
+    dadosAtualizacao: any,
   ): Promise<Projeto> {
     const projeto = await Projeto.findByPk(id);
 
@@ -90,7 +90,7 @@ class ProjetoService {
 
   public async solicitarExclusaoPorId(
     id: number,
-    dadosExclusao: any
+    dadosExclusao: any,
   ): Promise<void> {
     const projeto = await Projeto.findByPk(id);
 
@@ -138,17 +138,14 @@ class ProjetoService {
     });
   }
 
-  // --- MÉTODO CORRIGIDO E ADICIONADO ---
   public async buscarPorNomeUnico(nome: string): Promise<Projeto | null> {
-    // --- LOG 4: INÍCIO DA BUSCA NO SERVICE ---
-
     try {
       const projeto = await Projeto.findOne({
         where: {
           [Op.and]: [
             sequelize.where(
               sequelize.fn("LOWER", sequelize.col("nome_projeto")),
-              sequelize.fn("LOWER", nome)
+              sequelize.fn("LOWER", nome),
             ),
             { status: "ativo" },
           ],
@@ -159,7 +156,7 @@ class ProjetoService {
       // --- LOG 5: RESULTADO DA BUSCA PRINCIPAL ---
       if (!projeto) {
         console.log(
-          "[SERVICE] BUSCA PRINCIPAL: Nenhum projeto encontrado com os critérios. Retornando null."
+          "[SERVICE] BUSCA PRINCIPAL: Nenhum projeto encontrado com os critérios. Retornando null.",
         );
         return null;
       }
@@ -209,10 +206,10 @@ class ProjetoService {
       if (avaliacoes && avaliacoes.length > 0) {
         const somaDasNotas = avaliacoes.reduce(
           (acc, avaliacao) => acc + (avaliacao.nota || 0),
-          0
+          0,
         );
         (projetoJSON as any).media = parseFloat(
-          (somaDasNotas / avaliacoes.length).toFixed(1)
+          (somaDasNotas / avaliacoes.length).toFixed(1),
         );
       } else {
         (projetoJSON as any).media = 0;
@@ -222,7 +219,7 @@ class ProjetoService {
       // --- LOG DE ERRO NO SERVICE ---
       console.error(
         "[SERVICE] Ocorreu um erro durante a busca no banco de dados:",
-        error
+        error,
       );
       throw error; // Lança o erro para o controller lidar com ele
     }
@@ -273,15 +270,30 @@ class ProjetoService {
 
   public async alterarStatusAtivo(
     id: number,
-    ativo: boolean
+    ativo: boolean,
   ): Promise<Projeto> {
     const projeto = await Projeto.findByPk(id);
     if (!projeto) {
       throw new Error("Projeto não encontrado.");
     }
+
     projeto.ativo = ativo;
+    projeto.status = ativo ? StatusProjeto.ATIVO : StatusProjeto.INATIVO;
+
     await projeto.save();
     return projeto;
+  }
+
+  public async listarParaAdminGeral(): Promise<Projeto[]> {
+    return Projeto.findAll({
+      include: [
+        {
+          model: ImagemProjeto,
+          as: "projetoImg",
+          attributes: ["url"],
+        },
+      ],
+    });
   }
 
   public async listarPendentes(): Promise<{
