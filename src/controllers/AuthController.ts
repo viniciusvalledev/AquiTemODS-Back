@@ -1,11 +1,5 @@
 import { Request, Response } from "express";
 import AuthService from "../services/AuthService";
-import Projeto, {
-  StatusProjeto,
-} from "../entities/Projeto.entity";
-import ImagemProjeto from "../entities/ImagemProjeto.entity"; // ADICIONAR IMPORT
-import * as jwt from "jsonwebtoken";
-import { Op } from "sequelize";
 
 class AuthController {
   public async cadastrar(req: Request, res: Response): Promise<Response> {
@@ -61,6 +55,26 @@ class AuthController {
     }
   }
 
+  public async resendConfirmation(
+    req: Request,
+    res: Response,
+  ): Promise<Response> {
+    try {
+      const { username } = req.body;
+      if (!username) {
+        return res
+          .status(400)
+          .json({ message: "Utilizador ou e-mail é obrigatório." });
+      }
+      await AuthService.resendConfirmationEmail(username);
+      return res.json({
+        message: "E-mail de confirmação reenviado com sucesso.",
+      });
+    } catch (error: any) {
+      return res.status(400).json({ message: error.message });
+    }
+  }
+
   public async forgotPassword(req: Request, res: Response): Promise<Response> {
     try {
       await AuthService.forgotPassword(req.body.email);
@@ -88,7 +102,7 @@ class AuthController {
 
   public async confirmEmailChange(
     req: Request,
-    res: Response
+    res: Response,
   ): Promise<Response> {
     try {
       await AuthService.confirmEmailChange(req.query.token as string);

@@ -15,7 +15,7 @@ class AuthService {
   public async cadastrarUsuario(dadosUsuario: any) {
     if (ProfanityFilter.contemPalavrao(dadosUsuario.username)) {
       throw new Error(
-        "Você utilizou palavras inapropriadas no nome de usuário."
+        "Você utilizou palavras inapropriadas no nome de usuário.",
       );
     }
     const usernameExistente = await Usuario.findOne({
@@ -70,7 +70,7 @@ class AuthService {
 
     await EmailService.sendConfirmationEmail(
       novoUtilizador.email,
-      tokenConfirmacao
+      tokenConfirmacao,
     );
 
     const { password, ...dadosSeguros } = novoUtilizador.get({ plain: true });
@@ -90,7 +90,7 @@ class AuthService {
 
     if (!utilizador.enabled) {
       throw new Error(
-        "Sua conta ainda não foi verificada. Por favor, verifique seu e-mail."
+        "Sua conta ainda não foi verificada. Por favor, verifique seu e-mail.",
       );
     }
 
@@ -102,7 +102,7 @@ class AuthService {
     const token = jwt.sign(
       { id: utilizador.usuarioId, username: utilizador.username },
       process.env.JWT_SECRET || "default_secret",
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
 
     const { password, ...dadosSeguros } = utilizador.get({ plain: true });
@@ -123,6 +123,34 @@ class AuthService {
     await utilizador.save();
   }
 
+  public async resendConfirmationEmail(username: string) {
+    const utilizador = await Usuario.findOne({
+      where: {
+        [Op.or]: [{ username: username }, { email: username }],
+      },
+    });
+
+    if (!utilizador) {
+      throw new Error("Usuário não encontrado.");
+    }
+
+    if (utilizador.enabled) {
+      throw new Error(
+        "Sua conta já está verificada. Você já pode fazer login.",
+      );
+    }
+
+    if (!utilizador.confirmationToken) {
+      utilizador.confirmationToken = uuidv4();
+      await utilizador.save();
+    }
+
+    await EmailService.sendConfirmationEmail(
+      utilizador.email,
+      utilizador.confirmationToken,
+    );
+  }
+
   public async confirmEmailChange(token: string) {
     const utilizador = await Usuario.findOne({
       where: { emailChangeToken: token },
@@ -130,7 +158,7 @@ class AuthService {
 
     if (!utilizador || !utilizador.unconfirmedEmail) {
       throw new Error(
-        "Token de alteração de e-mail inválido ou não encontrado."
+        "Token de alteração de e-mail inválido ou não encontrado.",
       );
     }
 
@@ -213,14 +241,14 @@ class AuthService {
 
   public async updateUserPassword(
     userId: number,
-    request: IUpdatePasswordRequest
+    request: IUpdatePasswordRequest,
   ) {
     const utilizador = await Usuario.findOne({ where: { usuarioId: userId } });
     if (!utilizador) throw new Error("Utilizador não encontrado.");
 
     const isMatch = await bcrypt.compare(
       request.currentPassword,
-      utilizador.password
+      utilizador.password,
     );
     if (!isMatch) {
       throw new Error("A senha atual está incorreta.");
