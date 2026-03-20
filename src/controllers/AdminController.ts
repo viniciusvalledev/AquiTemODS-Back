@@ -303,7 +303,8 @@ export class AdminController {
               projeto.projetoId.toString(),
             );
           } else if (statusAnterior === StatusProjeto.PENDENTE_ATUALIZACAO) {
-            await EmailService.sendProjectUpdateApprovedEmail(
+            // Enviar o mesmo e-mail de aprovação (como se nada tivesse sido alterado)
+            await EmailService.sendProjectApprovedEmail(
               projeto.emailContato,
               projeto.prefeitura,
               projeto.nomeProjeto,
@@ -485,7 +486,8 @@ export class AdminController {
               projeto.projetoId.toString(),
             );
           } else if (statusOriginal === StatusProjeto.PENDENTE_ATUALIZACAO) {
-            await EmailService.sendProjectUpdateApprovedEmail(
+            // Enviar o mesmo e-mail de aprovação (como se nada tivesse sido alterado)
+            await EmailService.sendProjectApprovedEmail(
               projeto.emailContato,
               projeto.prefeitura,
               projeto.nomeProjeto,
