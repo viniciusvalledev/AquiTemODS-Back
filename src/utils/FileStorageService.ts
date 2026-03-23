@@ -34,7 +34,7 @@ class FileStorageService {
 
     // Extrai o tipo de imagem e os dados
     const matches = base64String.match(
-      /^data:(image\/([a-zA-Z]+));base64,(.+)$/
+      /^data:(image\/([a-zA-Z]+));base64,(.+)$/,
     );
     if (!matches || matches.length !== 4) {
       throw new Error("Formato de string Base64 inválido.");
@@ -48,7 +48,7 @@ class FileStorageService {
     await fs.writeFile(filePath, imageBuffer);
 
     // Retorna o caminho público que será usado na API
-    return `/images/${uniqueFilename}`;
+    return `/uploads/${uniqueFilename}`;
   }
 
   public async save(file: Express.Multer.File): Promise<string> {
@@ -57,32 +57,25 @@ class FileStorageService {
     // O Multer já salva o ficheiro temporariamente, aqui só renomeamos e movemos se necessário
     // Neste exemplo, assumimos que o Multer já salvou na pasta `uploads` com um nome único.
     // O trabalho principal será feito na configuração do Multer.
-    const fileUrl = `/images/${file.filename}`;
+    const fileUrl = `/uploads/${file.filename}`;
     return fileUrl;
   }
-public async deleteFolder(
-    ods: string,
-    nomeProjeto: string
-  ): Promise<void> {
-    
+  public async deleteFolder(ods: string, nomeProjeto: string): Promise<void> {
     const safeOds = sanitizeFilename(ods || "geral");
     const safeNomeProjeto = sanitizeFilename(nomeProjeto || "projeto_sem_nome");
 
     const folderPath = path.join(UPLOADS_DIR, safeOds, safeNomeProjeto);
 
     try {
-      
       await fs.access(folderPath);
-      
-      
+
       await fs.rm(folderPath, { recursive: true, force: true });
       console.log(`[FileStorageService] Pasta removida: ${folderPath}`);
     } catch (error: any) {
-    
       if (error.code !== "ENOENT") {
         console.error(
           `[FileStorageService] Erro ao remover pasta ${folderPath}:`,
-          error.message
+          error.message,
         );
       }
     }
