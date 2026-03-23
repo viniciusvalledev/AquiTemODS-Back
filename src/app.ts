@@ -33,11 +33,6 @@ sequelize
   .authenticate()
   .then(() => {
     console.log("Conexão com o banco estabelecida com sucesso!");
-
-    const PORT = process.env.PORT;
-    app.listen(PORT, () => {
-      console.log(`Servidor rodando na porta ${PORT}`);
-    });
   })
   .catch((error: any) => {
     console.error("Erro ao conectar no banco:", error);
