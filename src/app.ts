@@ -23,24 +23,16 @@ import adminSustentaiAcoesConteudoRoutes from "./routes/adminSustentaiAcoesConte
 import sustentaiBlocosRoutes from "./routes/sustentaiBlocos.routes";
 
 const app = express();
-const uploadsPath = path.resolve(process.cwd(), "uploads");
 
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-
-app.use("/uploads", express.static(uploadsPath));
 
 // conecta ao banco com Sequelize
 sequelize
   .authenticate()
   .then(() => {
     console.log("Conexão com o banco estabelecida com sucesso!");
-
-    const PORT = process.env.PORT;
-    app.listen(PORT, () => {
-      console.log(`Servidor rodando na porta ${PORT}`);
-    });
   })
   .catch((error: any) => {
     console.error("Erro ao conectar no banco:", error);
