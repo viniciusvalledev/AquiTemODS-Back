@@ -4,6 +4,10 @@ import Avaliacao from "./Avaliacao.entity";
 import ImagemProjeto from "./ImagemProjeto.entity";
 import SustentaiAcao from "./SustentaiAcao.entity";
 import SustentAi from "./SustentAi.entity";
+import SustentaiAcaoBloco from "./SustentaiAcaoBloco.entity";
+import SustentaiBloco from "./SustentaiBloco.entity";
+import SustentaiHeader from "./SustentaiHeader.entity";
+import SustentaiPessoa from "./SustentaiPessoa.entity";
 
 Usuario.hasMany(Avaliacao, { foreignKey: "usuarioId", as: "avaliacoes" });
 Avaliacao.belongsTo(Usuario, { foreignKey: "usuarioId", as: "usuario" });
@@ -23,4 +27,16 @@ Projeto.hasMany(ImagemProjeto, {
 });
 ImagemProjeto.belongsTo(Projeto, { foreignKey: "projetoId" });
 
-export { Usuario, Projeto, Avaliacao, ImagemProjeto, SustentaiAcao, SustentAi };
+// Associações relacionadas ao módulo Sustentai
+SustentaiAcao.hasMany(SustentaiAcaoBloco, {
+  foreignKey: "acaoId",
+  as: "blocos",
+  onDelete: "SET NULL",
+});
+SustentaiAcaoBloco.belongsTo(SustentaiAcao, {
+  foreignKey: "acaoId",
+  as: "acao",
+  onDelete: "SET NULL",
+});
+
+export { Usuario, Projeto, Avaliacao, ImagemProjeto, SustentaiAcao, SustentAi, SustentaiAcaoBloco, SustentaiBloco, SustentaiHeader, SustentaiPessoa };
