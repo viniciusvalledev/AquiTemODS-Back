@@ -31,12 +31,27 @@ ImagemProjeto.belongsTo(Projeto, { foreignKey: "projetoId" });
 SustentaiAcao.hasMany(SustentaiAcaoBloco, {
   foreignKey: "acaoId",
   as: "blocos",
-  onDelete: "SET NULL",
-});
-SustentaiAcaoBloco.belongsTo(SustentaiAcao, {
-  foreignKey: "acaoId",
-  as: "acao",
-  onDelete: "SET NULL",
+  onDelete: "CASCADE",
 });
 
-export { Usuario, Projeto, Avaliacao, ImagemProjeto, SustentaiAcao, SustentAi, SustentaiAcaoBloco, SustentaiBloco, SustentaiHeader, SustentaiPessoa };
+SustentaiAcaoBloco.belongsTo(SustentaiAcao, {
+  foreignKey: {
+    name: "acaoId",
+    allowNull: false, // mantém obrigatório
+  },
+  as: "acao",
+  onDelete: "CASCADE",
+});
+
+export {
+  Usuario,
+  Projeto,
+  Avaliacao,
+  ImagemProjeto,
+  SustentaiAcao,
+  SustentAi,
+  SustentaiAcaoBloco,
+  SustentaiBloco,
+  SustentaiHeader,
+  SustentaiPessoa,
+};
