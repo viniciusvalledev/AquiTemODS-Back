@@ -15,6 +15,7 @@ class SustentaiAcao extends Model {
   public corTexto?: string | null;
   public tag?: string | null;
   public cliques!: number;
+  public publicado!: boolean;
 }
 
 SustentaiAcao.init(
@@ -79,6 +80,11 @@ SustentaiAcao.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
+    },
+    publicado: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
   },
   {

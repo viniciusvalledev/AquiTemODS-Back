@@ -33,7 +33,6 @@ export class SustentaiAcoesController {
     }
   }
 
-  // Novo: endpoint público para incrementar cliques
   static async registerClick(req: Request, res: Response) {
     try {
       const { id } = req.params;
@@ -41,7 +40,6 @@ export class SustentaiAcoesController {
       if (!acao)
         return res.status(404).json({ message: "Ação não encontrada." });
 
-      // incremento atômico
       await acao.increment("cliques");
       await acao.reload();
 
@@ -74,7 +72,6 @@ export class SustentaiAcoesController {
 
   static async create(req: Request, res: Response) {
     try {
-      // Proteção: não permita criar quando o cliente enviar um `id` (indica request inválida/duplicada)
       if (req.body && (req.body.id || req.body.projetoId)) {
         return res
           .status(400)
@@ -92,9 +89,9 @@ export class SustentaiAcoesController {
         corTexto,
         imagemUrl,
         tag,
+        publicado,
       } = req.body;
 
-      // Exigir apenas título; descrição pode ficar vazia
       const missing: string[] = [];
       if (!titulo) missing.push("titulo");
       if (missing.length > 0) {
@@ -103,7 +100,6 @@ export class SustentaiAcoesController {
           .json({ message: "Campos obrigatórios não informados.", missing });
       }
 
-      // Não permitir títulos duplicados
       const existing = await SustentaiAcao.findOne({ where: { titulo } });
       if (existing) {
         return res
@@ -132,7 +128,8 @@ export class SustentaiAcoesController {
         finalImagemUrl = `/uploads/sustentai/acoes/${slug}/${newFilename}`;
       }
 
-      // Tenta criar de forma atômica para evitar condições de corrida
+      const isPublicado = publicado === "true" || publicado === true;
+
       const defaults = {
         titulo,
         slug,
@@ -145,6 +142,7 @@ export class SustentaiAcoesController {
         corBorda: corBorda ?? "",
         corTexto: corTexto ?? "",
         tag: tag ?? null,
+        publicado: isPublicado,
       };
 
       const novaAcao = await SustentaiAcao.create(defaults);
@@ -179,6 +177,7 @@ export class SustentaiAcoesController {
         corTexto,
         imagemUrl,
         tag,
+        publicado,
       } = req.body;
 
       const acao = await SustentaiAcao.findByPk(id);
@@ -224,6 +223,11 @@ export class SustentaiAcoesController {
         finalImagemUrl = imagemUrl;
       }
 
+      const isPublicado =
+        publicado !== undefined
+          ? publicado === "true" || publicado === true
+          : acao.publicado;
+
       await acao.update({
         titulo: titulo ?? acao.titulo,
         descricao: descricao ?? acao.descricao,
@@ -235,6 +239,7 @@ export class SustentaiAcoesController {
         corBorda: corBorda ?? acao.corBorda ?? "",
         corTexto: corTexto ?? acao.corTexto ?? "",
         tag: tag ?? acao.tag ?? null,
+        publicado: isPublicado,
       });
 
       return res.status(200).json(acao);
