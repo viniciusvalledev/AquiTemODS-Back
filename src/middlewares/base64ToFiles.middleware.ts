@@ -38,29 +38,34 @@ export const base64BlocosToFiles = async (
 
     if (!filesObj["conteudoFiles"]) filesObj["conteudoFiles"] = [];
 
-    // Função auxiliar para processar a string base64, salvar em disco e retornar o nome do arquivo
     const processBase64 = (base64String: string) => {
-      // Regex atualizado para suportar imagens e PDFs
-      const matches = base64String.match(
-        /^data:(image\/(png|jpeg|jpg|webp|gif)|application\/pdf);base64,(.+)$/,
-      );
+      const matches = base64String.match(/^data:(.*?);base64,(.+)$/);
+
       if (!matches) return null;
 
-      const mime = matches[1];
-      let ext = "bin";
+      const fullMime = matches[1];
+      const mime = fullMime.split(";")[0];
+      const base64Data = matches[2];
 
-      if (mime === "application/pdf") {
-        ext = "pdf";
-      } else {
-        ext = matches[2] === "jpeg" ? "jpg" : matches[2];
+      if (
+        !mime.startsWith("image/") &&
+        !mime.startsWith("video/") &&
+        mime !== "application/pdf"
+      ) {
+        return null;
       }
 
-      const buffer = Buffer.from(matches[3], "base64");
+      let ext = mime.split("/")[1];
+      if (ext === "jpeg") ext = "jpg";
+      if (ext === "quicktime") ext = "mov";
+
+      const buffer = Buffer.from(base64Data, "base64");
       const filename = `${Date.now()}-${uuidv4()}.${ext}`;
       const filepath = path.join(UPLOADS_DIR, filename);
 
-      if (!fs.existsSync(UPLOADS_DIR))
+      if (!fs.existsSync(UPLOADS_DIR)) {
         fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+      }
       fs.writeFileSync(filepath, buffer);
 
       filesObj["conteudoFiles"].push({
@@ -77,21 +82,26 @@ export const base64BlocosToFiles = async (
       return filename;
     };
 
-    // Percorre os blocos procurando Base64 nos dois formatos (antigo e novo)
     for (const bloco of blocos) {
-      if (bloco && bloco.type === "image") {
-        // 1. Retrocompatibilidade: Checa o formato antigo (bloco.content)
+      if (
+        bloco &&
+        (bloco.type === "image" ||
+          bloco.type === "video" ||
+          bloco.tipo === "video")
+      ) {
+        const campoConteudo =
+          bloco.content !== undefined ? "content" : "conteudo";
+
         if (
-          typeof bloco.content === "string" &&
-          bloco.content.startsWith("data:")
+          typeof bloco[campoConteudo] === "string" &&
+          bloco[campoConteudo].startsWith("data:")
         ) {
-          const savedFilename = processBase64(bloco.content);
+          const savedFilename = processBase64(bloco[campoConteudo]);
           if (savedFilename) {
-            bloco.content = savedFilename;
+            bloco[campoConteudo] = savedFilename;
           }
         }
 
-        // 2. Novo formato Swiper/Carrossel: Checa dentro do array bloco.images
         if (Array.isArray(bloco.images)) {
           for (let i = 0; i < bloco.images.length; i++) {
             const img = bloco.images[i];
