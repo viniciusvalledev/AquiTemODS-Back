@@ -20,7 +20,7 @@ SustentaiAcaoBloco.init(
     },
     acaoId: {
       type: DataTypes.INTEGER,
-      allowNull: true, // alterado para true para ser compatível com a FK existente (ON DELETE SET NULL)
+      allowNull: true,
       field: "acao_id",
     },
     type: {
