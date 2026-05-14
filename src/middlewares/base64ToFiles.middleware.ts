@@ -40,28 +40,40 @@ export const base64BlocosToFiles = async (
 
     // Função auxiliar para processar a string base64, salvar em disco e retornar o nome do arquivo
     const processBase64 = (base64String: string) => {
-      // Regex atualizado para suportar imagens e PDFs
-      const matches = base64String.match(
-        /^data:(image\/(png|jpeg|jpg|webp|gif)|application\/pdf);base64,(.+)$/,
-      );
-      if (!matches) return null;
+      // Regex que pega qualquer coisa entre "data:" e ";base64,"
+      const matches = base64String.match(/^data:(.*?);base64,(.+)$/);
 
-      const mime = matches[1];
-      let ext = "bin";
-
-      if (mime === "application/pdf") {
-        ext = "pdf";
-      } else {
-        ext = matches[2] === "jpeg" ? "jpg" : matches[2];
+      if (!matches) {
+        console.log("❌ Base64 não reconhecido pelo Regex.");
+        return null;
       }
 
-      const buffer = Buffer.from(matches[3], "base64");
+      const mime = matches[1]; // ex: video/mp4, image/png, application/pdf
+      const base64Data = matches[2];
+
+      // Aqui nós liberamos o que é permitido: Imagens, VÍDEOS e PDFs
+      if (
+        !mime.startsWith("image/") &&
+        !mime.startsWith("video/") &&
+        mime !== "application/pdf"
+      ) {
+        return null;
+      }
+
+      let ext = mime.split("/")[1];
+      if (ext === "jpeg") ext = "jpg";
+      if (ext === "quicktime") ext = "mov";
+
+      const buffer = Buffer.from(base64Data, "base64");
       const filename = `${Date.now()}-${uuidv4()}.${ext}`;
       const filepath = path.join(UPLOADS_DIR, filename);
 
-      if (!fs.existsSync(UPLOADS_DIR))
+      if (!fs.existsSync(UPLOADS_DIR)) {
         fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+      }
+
       fs.writeFileSync(filepath, buffer);
+      console.log(`📂 Arquivo temporário criado: ${filename}`);
 
       filesObj["conteudoFiles"].push({
         fieldname: "conteudoFiles",
