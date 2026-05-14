@@ -38,7 +38,6 @@ export const base64BlocosToFiles = async (
 
     if (!filesObj["conteudoFiles"]) filesObj["conteudoFiles"] = [];
 
-    // Função auxiliar para processar a string base64, salvar em disco e retornar o nome do arquivo
     const processBase64 = (base64String: string) => {
       // Regex que pega qualquer coisa entre "data:" e ";base64,"
       const matches = base64String.match(/^data:(.*?);base64,(.+)$/);
@@ -89,7 +88,6 @@ export const base64BlocosToFiles = async (
       return filename;
     };
 
-    // Percorre os blocos procurando Base64 nos dois formatos (antigo e novo)
     for (const bloco of blocos) {
       if (
         bloco &&
