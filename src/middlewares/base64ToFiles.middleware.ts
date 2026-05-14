@@ -39,14 +39,18 @@ export const base64BlocosToFiles = async (
     if (!filesObj["conteudoFiles"]) filesObj["conteudoFiles"] = [];
 
     const processBase64 = (base64String: string) => {
+      // Regex que pega qualquer coisa entre "data:" e ";base64,"
       const matches = base64String.match(/^data:(.*?);base64,(.+)$/);
 
-      if (!matches) return null;
+      if (!matches) {
+        console.log("❌ Base64 não reconhecido pelo Regex.");
+        return null;
+      }
 
-      const fullMime = matches[1];
-      const mime = fullMime.split(";")[0];
+      const mime = matches[1]; // ex: video/mp4, image/png, application/pdf
       const base64Data = matches[2];
 
+      // Aqui nós liberamos o que é permitido: Imagens, VÍDEOS e PDFs
       if (
         !mime.startsWith("image/") &&
         !mime.startsWith("video/") &&
@@ -66,7 +70,9 @@ export const base64BlocosToFiles = async (
       if (!fs.existsSync(UPLOADS_DIR)) {
         fs.mkdirSync(UPLOADS_DIR, { recursive: true });
       }
+
       fs.writeFileSync(filepath, buffer);
+      console.log(`📂 Arquivo temporário criado: ${filename}`);
 
       filesObj["conteudoFiles"].push({
         fieldname: "conteudoFiles",
@@ -109,6 +115,18 @@ export const base64BlocosToFiles = async (
               const savedFilename = processBase64(img.url);
               if (savedFilename) {
                 bloco.images[i].url = savedFilename;
+              }
+            }
+          }
+        }
+
+        if (Array.isArray(bloco.videos)) {
+          for (let i = 0; i < bloco.videos.length; i++) {
+            const vid = bloco.videos[i];
+            if (typeof vid.url === "string" && vid.url.startsWith("data:")) {
+              const savedFilename = processBase64(vid.url);
+              if (savedFilename) {
+                bloco.videos[i].url = savedFilename;
               }
             }
           }

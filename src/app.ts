@@ -25,8 +25,8 @@ import sustentaiBlocosRoutes from "./routes/sustentaiBlocos.routes";
 const app = express();
 
 app.use(cors());
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 
 // conecta ao banco com Sequelize
 sequelize
