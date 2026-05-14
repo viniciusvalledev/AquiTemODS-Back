@@ -79,19 +79,25 @@ export const base64BlocosToFiles = async (
 
     // Percorre os blocos procurando Base64 nos dois formatos (antigo e novo)
     for (const bloco of blocos) {
-      if (bloco && bloco.type === "image") {
-        // 1. Retrocompatibilidade: Checa o formato antigo (bloco.content)
+      if (
+        bloco &&
+        (bloco.type === "image" ||
+          bloco.type === "video" ||
+          bloco.tipo === "video")
+      ) {
+        const campoConteudo =
+          bloco.content !== undefined ? "content" : "conteudo";
+
         if (
-          typeof bloco.content === "string" &&
-          bloco.content.startsWith("data:")
+          typeof bloco[campoConteudo] === "string" &&
+          bloco[campoConteudo].startsWith("data:")
         ) {
-          const savedFilename = processBase64(bloco.content);
+          const savedFilename = processBase64(bloco[campoConteudo]);
           if (savedFilename) {
-            bloco.content = savedFilename;
+            bloco[campoConteudo] = savedFilename;
           }
         }
 
-        // 2. Novo formato Swiper/Carrossel: Checa dentro do array bloco.images
         if (Array.isArray(bloco.images)) {
           for (let i = 0; i < bloco.images.length; i++) {
             const img = bloco.images[i];
@@ -99,6 +105,18 @@ export const base64BlocosToFiles = async (
               const savedFilename = processBase64(img.url);
               if (savedFilename) {
                 bloco.images[i].url = savedFilename;
+              }
+            }
+          }
+        }
+
+        if (Array.isArray(bloco.videos)) {
+          for (let i = 0; i < bloco.videos.length; i++) {
+            const vid = bloco.videos[i];
+            if (typeof vid.url === "string" && vid.url.startsWith("data:")) {
+              const savedFilename = processBase64(vid.url);
+              if (savedFilename) {
+                bloco.videos[i].url = savedFilename;
               }
             }
           }
